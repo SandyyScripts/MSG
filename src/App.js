@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useRef } from "react";
 import "./App.css";
 import Message from "./Message";
 import { FormControl, Input } from "@material-ui/core";
@@ -7,20 +7,19 @@ import firebase from "firebase";
 import FlipMove from "react-flip-move";
 import SendIcon from "@material-ui/icons/Send";
 import { IconButton } from "@material-ui/core";
-import useSound from 'use-sound';
-import FB from './Sound/notify.mp3';
 
 function App() {
 	const [input, setInput] = useState("");
 	const [messages, setMessages] = useState([]);
 	const [username, setUsername] = useState("");
-	const [play] = useSound(FB);
+	const inputEl = useRef(null);
+	
 	useEffect(() => {
 		const unsubscribe = db.collection("messages")
 			.orderBy("timestamp", "desc")
 			.onSnapshot((snapshot) => {
 				if (!document.hasFocus()){
-					play();
+					new Notification("You Have a new Message")
 				}
 				setMessages(
 					snapshot.docs.map((doc) => ({ id: doc.id, message: doc.data() }))
@@ -35,6 +34,11 @@ function App() {
 	useEffect(() => {
 		//code
 		// const username=prompt("Please Enter Your Name") in JS
+		if (!("Notification" in window)) {
+			console.log("This browser does not support desktop notification");
+		  } else {
+			Notification.requestPermission();
+		  }
 		setUsername(prompt("Please Enter Your Name"));
 	}, []); //condition
 
@@ -46,6 +50,7 @@ function App() {
 			timestamp: firebase.firestore.FieldValue.serverTimestamp(),
 		});
 		setInput("");
+		inputEl.current.focus();
 	};
 	return (
 		<div className="App">
@@ -59,6 +64,7 @@ function App() {
 			<form className="app__form">
 				<FormControl className="app__formControl">
 					<Input
+						ref={inputEl}
 						className="app__input"
 						placeholder="Enter a message..."
 						value={input}
